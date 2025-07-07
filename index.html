@@ -1,0 +1,443 @@
+index.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prudential Thinking - Random Wisdom Prompts</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/lucide-react@latest/dist/umd/lucide-react.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .rotate-y-180 {
+            transform: rotateY(180deg);
+        }
+        .backface-hidden {
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+        }
+        .transform-style-preserve-3d {
+            transform-style: preserve-3d;
+        }
+        @keyframes gentlePulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+        .animate-pulse {
+            animation: gentlePulse 2s ease-in-out;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        const { ChevronLeft, ChevronRight, RotateCcw, Bell, BellOff, Play, Pause, Settings } = lucideReact;
+
+        const PrudentialWisdomApp = () => {
+            // All flashcard data
+            const flashcards = [
+                // Docility
+                { front: "You might ask this of yourself to ensure you're remaining open to learning and growth.", back: "Am I teachable regarding this?", category: "Openness to Learning", element: "Docility" },
+                { front: "This question helps you identify mentors and experts who could guide your understanding.", back: "Who knows more about this than I do?", category: "Seeking Wisdom", element: "Docility" },
+                { front: "You'd pose this to seek input that might challenge your current perspective.", back: "Where can I get feedback, even if it challenges my viewpoint?", category: "Embracing Challenge", element: "Docility" },
+                
+                // Understanding
+                { front: "This self-inquiry checks whether you're observing as keenly as the situation demands.", back: "Am I being as perceptive as I should be?", category: "Sharp Perception", element: "Understanding" },
+                { front: "You might ask this to ensure you're grasping both the specifics and the bigger picture.", back: "Do I see the details and the context?", category: "Complete Vision", element: "Understanding" },
+                { front: "This question seeks the facts stripped of bias or interpretation.", back: "What's the plain, uncolored truth?", category: "Objective Truth", element: "Understanding" },
+                
+                // Memory
+                { front: "You'd reflect on this when examining your past experiences for insight.", back: "What do I recall as I look backward?", category: "Learning from History", element: "Memory" },
+                { front: "This question helps you identify relevant parallels from your history.", back: "What similar situation have I faced?", category: "Pattern Recognition", element: "Memory" },
+                { front: "You might ask this to extract wisdom from previous encounters.", back: "What lesson from my past might apply?", category: "Applied Wisdom", element: "Memory" },
+                
+                // Reason
+                { front: "You'd pose this to enhance your logical thinking processes.", back: "How can I be more rational?", category: "Clear Thinking", element: "Reason" },
+                { front: "This inquiry weighs the pros and cons supporting your choice.", back: "What evidence supports my decision, and what contradicts it?", category: "Evidence-Based Decisions", element: "Reason" },
+                { front: "You might ask this to separate feelings from objective analysis.", back: "Are any emotions influencing my judgment, and how can I set them aside?", category: "Emotional Awareness", element: "Reason" },
+                
+                // Circumspection
+                { front: "This question encourages you to survey all aspects of your current circumstances.", back: "What do I see as I 'look around' this situation?", category: "Situational Awareness", element: "Circumspection" },
+                { front: "You'd ask this to consider various perspectives on the same issue.", back: "Are there multiple angles I can look from?", category: "Multiple Perspectives", element: "Circumspection" },
+                { front: "This deep inquiry examines the unconscious beliefs shaping your perception.", back: "What assumptions am I making, that I'm not aware I'm making, that give me what I see?", category: "Hidden Assumptions", element: "Circumspection" },
+                
+                // Foresight
+                { front: "You might ask this when considering future implications of present actions.", back: "What do I see when I look ahead of this moment?", category: "Future Thinking", element: "Foresight" },
+                { front: "This question helps you anticipate potential outcomes and scenarios.", back: "What can I imagine to happen next?", category: "Scenario Planning", element: "Foresight" },
+                { front: "You'd reflect on this to consider how current decisions affect your bigger aspirations.", back: "What long-term goals and values might be impacted?", category: "Values Alignment", element: "Foresight" },
+                
+                // Shrewdness
+                { front: "You'd ask this to enhance your adaptability and responsiveness.", back: "How can I be more nimble?", category: "Agile Thinking", element: "Shrewdness" },
+                { front: "This question seeks opportunity within unexpected circumstances.", back: "How can I exploit the unexpected?", category: "Opportunistic Thinking", element: "Shrewdness" },
+                { front: "You might pose this when needing a rapid solution under pressure.", back: "What's a 'quick fix' in a pinch?", category: "Quick Solutions", element: "Shrewdness" },
+                
+                // Caution
+                { front: "You'd ask this to practice prudence in your decision-making.", back: "How can I be careful?", category: "Prudent Action", element: "Caution" },
+                { front: "This question checks whether haste might lead to poor judgment.", back: "Am I in a rush that I might regret?", category: "Avoiding Haste", element: "Caution" },
+                { front: "You might reflect on this to anticipate potential downsides of your choices.", back: "What are possible negative consequences of my action?", category: "Risk Assessment", element: "Caution" }
+            ];
+
+            // Contextual prompts for different situations
+            const contextualPrompts = [
+                { context: "Morning Start", prompt: "Before diving into your day...", question: "What do I see when I look ahead of this moment?", element: "Foresight" },
+                { context: "Before Meetings", prompt: "As you prepare to engage with others...", question: "Am I being as perceptive as I should be?", element: "Understanding" },
+                { context: "Decision Point", prompt: "When facing a choice...", question: "What evidence supports my decision, and what contradicts it?", element: "Reason" },
+                { context: "Conflict Moment", prompt: "In tense situations...", question: "Are there multiple angles I can look from?", element: "Circumspection" },
+                { context: "Time Pressure", prompt: "When feeling rushed...", question: "Am I in a rush that I might regret?", element: "Caution" },
+                { context: "Learning Opportunity", prompt: "When encountering something new...", question: "Who knows more about this than I do?", element: "Docility" },
+                { context: "Problem Solving", prompt: "When stuck on a challenge...", question: "What similar situation have I faced?", element: "Memory" },
+                { context: "Quick Decision", prompt: "When you need to act fast...", question: "What's a 'quick fix' in a pinch?", element: "Shrewdness" }
+            ];
+
+            const [mode, setMode] = useState('flashcards');
+            const [currentIndex, setCurrentIndex] = useState(0);
+            const [flipped, setFlipped] = useState(false);
+            const [shuffledCards, setShuffledCards] = useState(flashcards);
+            
+            // Random prompts state
+            const [promptsEnabled, setPromptsEnabled] = useState(false);
+            const [currentPrompt, setCurrentPrompt] = useState(null);
+            const [promptInterval, setPromptInterval] = useState(300);
+            const [lastPromptTime, setLastPromptTime] = useState(Date.now());
+            const [promptHistory, setPromptHistory] = useState([]);
+
+            // Generate a random prompt
+            const generateRandomPrompt = () => {
+                const now = Date.now();
+                const hour = new Date().getHours();
+                
+                let availablePrompts = [...contextualPrompts];
+                
+                if (hour < 9) {
+                    availablePrompts = contextualPrompts.filter(p => 
+                        p.element === 'Foresight' || p.element === 'Understanding'
+                    );
+                } else if (hour > 17) {
+                    availablePrompts = contextualPrompts.filter(p => 
+                        p.element === 'Memory' || p.element === 'Circumspection'
+                    );
+                }
+                
+                const recentElements = promptHistory.slice(-3).map(p => p.element);
+                const freshPrompts = availablePrompts.filter(p => 
+                    !recentElements.includes(p.element)
+                );
+                
+                const selectedPrompts = freshPrompts.length > 0 ? freshPrompts : availablePrompts;
+                const randomPrompt = selectedPrompts[Math.floor(Math.random() * selectedPrompts.length)];
+                
+                setCurrentPrompt(randomPrompt);
+                setLastPromptTime(now);
+                setPromptHistory(prev => [...prev.slice(-4), randomPrompt]);
+                
+                return randomPrompt;
+            };
+
+            // Random prompt timer
+            useEffect(() => {
+                if (!promptsEnabled) return;
+                
+                const interval = setInterval(() => {
+                    const now = Date.now();
+                    if (now - lastPromptTime >= promptInterval * 1000) {
+                        generateRandomPrompt();
+                    }
+                }, 10000);
+                
+                return () => clearInterval(interval);
+            }, [promptsEnabled, promptInterval, lastPromptTime]);
+
+            // Flashcard functions
+            const shuffleArray = (array) => {
+                const newArray = [...array];
+                for (let i = newArray.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+                }
+                return newArray;
+            };
+
+            const handleShuffle = () => {
+                setShuffledCards(shuffleArray(flashcards));
+                setCurrentIndex(0);
+                setFlipped(false);
+            };
+
+            const handleFlip = () => setFlipped(!flipped);
+            const handleNext = () => {
+                if (currentIndex < shuffledCards.length - 1) {
+                    setFlipped(false);
+                    setCurrentIndex(currentIndex + 1);
+                }
+            };
+            const handlePrevious = () => {
+                if (currentIndex > 0) {
+                    setFlipped(false);
+                    setCurrentIndex(currentIndex - 1);
+                }
+            };
+
+            const dismissPrompt = () => {
+                setCurrentPrompt(null);
+            };
+
+            // Random Prompt Overlay
+            const RandomPromptOverlay = () => {
+                if (!currentPrompt) return null;
+                
+                return React.createElement('div', {
+                    className: "fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+                }, 
+                    React.createElement('div', {
+                        className: "bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 transform animate-pulse"
+                    },
+                        React.createElement('div', { className: "text-center" },
+                            React.createElement('div', {
+                                className: "w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4"
+                            }, React.createElement(Bell, { className: "text-blue-600", size: 24 })),
+                            React.createElement('h3', {
+                                className: "text-lg font-semibold text-gray-800 mb-2"
+                            }, "Wisdom Moment"),
+                            React.createElement('p', {
+                                className: "text-sm text-gray-600 mb-3"
+                            }, `${currentPrompt.context} • ${currentPrompt.element}`),
+                            React.createElement('p', {
+                                className: "text-base text-gray-700 mb-4"
+                            }, currentPrompt.prompt),
+                            React.createElement('div', {
+                                className: "bg-blue-50 rounded-lg p-4 mb-6"
+                            }, React.createElement('p', {
+                                className: "text-lg font-medium text-blue-900"
+                            }, `"${currentPrompt.question}"`)),
+                            React.createElement('div', { className: "flex gap-3" },
+                                React.createElement('button', {
+                                    onClick: dismissPrompt,
+                                    className: "flex-1 py-2 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                                }, "Dismiss"),
+                                React.createElement('button', {
+                                    onClick: () => {
+                                        dismissPrompt();
+                                        setMode('flashcards');
+                                    },
+                                    className: "flex-1 py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                }, "Practice More")
+                            )
+                        )
+                    )
+                );
+            };
+
+            // Settings Panel
+            const SettingsPanel = () => (
+                React.createElement('div', { className: "min-h-screen bg-gradient-to-br from-blue-600 to-purple-700 p-4" },
+                    React.createElement('div', { className: "max-w-md mx-auto" },
+                        React.createElement('h1', {
+                            className: "text-white text-2xl font-bold text-center mb-6"
+                        }, "Random Prompts Settings"),
+                        
+                        React.createElement('div', { className: "bg-white rounded-2xl p-6 space-y-6" },
+                            React.createElement('div', { className: "flex items-center justify-between" },
+                                React.createElement('div', {},
+                                    React.createElement('h3', { className: "font-semibold text-gray-800" }, "Enable Random Prompts"),
+                                    React.createElement('p', { className: "text-sm text-gray-600" }, 'Your digital "angel on the shoulder"')
+                                ),
+                                React.createElement('button', {
+                                    onClick: () => setPromptsEnabled(!promptsEnabled),
+                                    className: `w-12 h-6 rounded-full transition-colors ${promptsEnabled ? 'bg-blue-600' : 'bg-gray-300'}`
+                                }, React.createElement('div', {
+                                    className: `w-5 h-5 bg-white rounded-full transition-transform ${promptsEnabled ? 'translate-x-6' : 'translate-x-0.5'}`
+                                }))
+                            ),
+                            
+                            promptsEnabled && React.createElement(React.Fragment, {},
+                                React.createElement('div', {},
+                                    React.createElement('label', {
+                                        className: "block text-sm font-medium text-gray-700 mb-2"
+                                    }, "Prompt Frequency"),
+                                    React.createElement('select', {
+                                        value: promptInterval,
+                                        onChange: (e) => setPromptInterval(Number(e.target.value)),
+                                        className: "w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    },
+                                        React.createElement('option', { value: 180 }, "Every 3 minutes (Demo)"),
+                                        React.createElement('option', { value: 300 }, "Every 5 minutes"),
+                                        React.createElement('option', { value: 600 }, "Every 10 minutes"),
+                                        React.createElement('option', { value: 900 }, "Every 15 minutes"),
+                                        React.createElement('option', { value: 1800 }, "Every 30 minutes"),
+                                        React.createElement('option', { value: 3600 }, "Every hour")
+                                    )
+                                ),
+                                
+                                React.createElement('button', {
+                                    onClick: () => {
+                                        generateRandomPrompt();
+                                        setMode('flashcards');
+                                    },
+                                    className: "w-full py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                }, "Test Random Prompt Now")
+                            ),
+                            
+                            promptHistory.length > 0 && React.createElement('div', {},
+                                React.createElement('h4', { className: "font-medium text-gray-800 mb-3" }, "Recent Prompts"),
+                                React.createElement('div', { className: "space-y-2 max-h-40 overflow-y-auto" },
+                                    promptHistory.slice(-5).reverse().map((prompt, index) => 
+                                        React.createElement('div', { key: index, className: "text-xs bg-gray-50 p-2 rounded" },
+                                            React.createElement('div', { className: "font-medium text-gray-700" }, prompt.element),
+                                            React.createElement('div', { className: "text-gray-600" }, prompt.context)
+                                        )
+                                    )
+                                )
+                            )
+                        ),
+                        
+                        React.createElement('button', {
+                            onClick: () => setMode('flashcards'),
+                            className: "w-full mt-6 py-3 bg-white/20 text-white rounded-lg hover:bg-white/30 transition-colors"
+                        }, "Back to Flashcards")
+                    )
+                )
+            );
+
+            // Main App Navigation
+            const Navigation = () => (
+                React.createElement('div', { className: "flex justify-center gap-1 mb-4" },
+                    React.createElement('button', {
+                        onClick: () => setMode('flashcards'),
+                        className: `px-4 py-2 rounded-lg font-medium transition-colors ${mode === 'flashcards' ? 'bg-white text-blue-600' : 'bg-white/20 text-white hover:bg-white/30'}`
+                    }, "Flashcards"),
+                    React.createElement('button', {
+                        onClick: () => setMode('settings'),
+                        className: `px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 ${mode === 'settings' ? 'bg-white text-blue-600' : 'bg-white/20 text-white hover:bg-white/30'}`
+                    },
+                        React.createElement(Settings, { size: 16 }),
+                        "Prompts",
+                        promptsEnabled && React.createElement('div', { className: "w-2 h-2 bg-green-400 rounded-full" })
+                    )
+                )
+            );
+
+            if (mode === 'settings') {
+                return React.createElement(React.Fragment, {},
+                    React.createElement(SettingsPanel),
+                    React.createElement(RandomPromptOverlay)
+                );
+            }
+
+            // Flashcard Mode
+            const currentCard = shuffledCards[currentIndex];
+            
+            return React.createElement(React.Fragment, {},
+                React.createElement('div', { className: "min-h-screen bg-gradient-to-br from-blue-600 to-purple-700 flex flex-col" },
+                    // Header
+                    React.createElement('div', { className: "p-4 text-center" },
+                        React.createElement('h1', { className: "text-white text-2xl font-bold mb-4" }, "Prudential Thinking"),
+                        React.createElement(Navigation),
+                        
+                        React.createElement('div', { className: "flex justify-center gap-2" },
+                            React.createElement('button', {
+                                onClick: handleShuffle,
+                                className: "bg-white/20 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-white/30 transition-colors"
+                            },
+                                React.createElement(RotateCcw, { size: 16 }),
+                                "Shuffle"
+                            ),
+                            promptsEnabled && React.createElement('div', {
+                                className: "bg-green-500/20 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+                            },
+                                React.createElement(Bell, { size: 16 }),
+                                "Active"
+                            )
+                        )
+                    ),
+
+                    // Main Card Area
+                    React.createElement('div', { className: "flex-1 flex items-center justify-center px-4" },
+                        React.createElement('div', { className: "w-full max-w-md" },
+                            React.createElement('div', { className: "relative", style: { perspective: '1000px' } },
+                                React.createElement('div', {
+                                    className: `relative w-full h-80 transition-all duration-500 transform-style-preserve-3d cursor-pointer ${flipped ? 'rotate-y-180' : ''}`,
+                                    onClick: handleFlip,
+                                    style: { transformStyle: 'preserve-3d' }
+                                },
+                                    // Front of card
+                                    React.createElement('div', {
+                                        className: "absolute inset-0 bg-white rounded-2xl shadow-2xl flex flex-col p-6 backface-hidden",
+                                        style: { backfaceVisibility: 'hidden' }
+                                    },
+                                        React.createElement('div', {
+                                            className: "text-xs font-semibold text-purple-600 mb-3 text-center"
+                                        }, `${currentCard.category} • ${currentCard.element}`),
+                                        React.createElement('div', { className: "flex-1 flex items-center justify-center" },
+                                            React.createElement('p', {
+                                                className: "text-lg text-gray-800 text-center leading-relaxed"
+                                            }, currentCard.front)
+                                        ),
+                                        React.createElement('div', {
+                                            className: "text-xs text-gray-500 text-center mt-4"
+                                        }, "Tap to reveal • Use ↑↓ or spacebar")
+                                    ),
+                                    
+                                    // Back of card
+                                    React.createElement('div', {
+                                        className: "absolute inset-0 bg-gradient-to-br from-purple-50 to-blue-50 rounded-2xl shadow-2xl flex items-center justify-center p-6 rotate-y-180 backface-hidden",
+                                        style: { 
+                                            backfaceVisibility: 'hidden',
+                                            transform: 'rotateY(180deg)'
+                                        }
+                                    },
+                                        React.createElement('div', { className: "text-center" },
+                                            React.createElement('div', {
+                                                className: "text-xs font-semibold text-purple-600 mb-4"
+                                            }, "Prudential Question"),
+                                            React.createElement('p', {
+                                                className: "text-xl text-gray-800 font-medium leading-relaxed"
+                                            }, `"${currentCard.back}"`)
+                                        )
+                                    )
+                                )
+                            )
+                        )
+                    ),
+
+                    // Navigation
+                    React.createElement('div', { className: "p-4" },
+                        React.createElement('div', { className: "flex items-center justify-center mb-4" },
+                            React.createElement('button', {
+                                onClick: handlePrevious,
+                                disabled: currentIndex === 0,
+                                className: `p-3 rounded-full transition-all ${currentIndex === 0 ? 'bg-white/10 text-white/50 cursor-not-allowed' : 'bg-white/20 text-white hover:bg-white/30'}`
+                            }, React.createElement(ChevronLeft, { size: 24 })),
+                            
+                            React.createElement('span', {
+                                className: "mx-6 text-white text-lg font-medium min-w-[80px] text-center"
+                            }, `${currentIndex + 1} / ${shuffledCards.length}`),
+                            
+                            React.createElement('button', {
+                                onClick: handleNext,
+                                disabled: currentIndex === shuffledCards.length - 1,
+                                className: `p-3 rounded-full transition-all ${currentIndex === shuffledCards.length - 1 ? 'bg-white/10 text-white/50 cursor-not-allowed' : 'bg-white/20 text-white hover:bg-white/30'}`
+                            }, React.createElement(ChevronRight, { size: 24 }))
+                        ),
+                        
+                        // Progress bar
+                        React.createElement('div', { className: "w-full bg-white/20 rounded-full h-2" },
+                            React.createElement('div', {
+                                className: "bg-white rounded-full h-2 transition-all duration-300",
+                                style: { width: `${((currentIndex + 1) / shuffledCards.length) * 100}%` }
+                            })
+                        )
+                    )
+                ),
+                
+                React.createElement(RandomPromptOverlay)
+            );
+        };
+
+        ReactDOM.render(React.createElement(PrudentialWisdomApp), document.getElementById('root'));
+    </script>
+</body>
+</html>
